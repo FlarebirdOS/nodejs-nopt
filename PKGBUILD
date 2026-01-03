@@ -1,6 +1,6 @@
 pkgname=nodejs-nopt
-pkgver=7.2.1
-pkgrel=1
+pkgver=9.0.0
+pkgrel=2
 pkgdesc="Node/npm Option Parsing library"
 arch=('x86_64')
 url="https://github.com/npm/nopt"
@@ -9,18 +9,17 @@ depends=('nodejs')
 makedepends=('npm')
 options=('!strip')
 source=(https://registry.npmjs.org/nopt/-/${pkgname#*-}-${pkgver}.tgz)
-sha256sums=(1abeca1ede32a6d0d6517a1dedee0bd1faefaac99364b5c519bc179ac921e44d)
+sha256sums=(0f9914e5614ba8c750d221c44b2b04e9300ebf32a3e800925ffdf7070cc28b24)
 
 package() {
-    cd package
 
-    local mod_dir=/usr/lib64/node_modules/nopt
+    npm install -g --prefix ${pkgdir}/usr ${srcdir}/${pkgname#*-}-${pkgver}.tgz
 
-    install -vdm755 ${pkgdir}/{usr/bin,${mod_dir}}
+    # Non-deterministic race in npm gives 777 permissions to random directories.
+    # See https://github.com/npm/npm/issues/9359 for details.
+    chmod -R u=rwX,go=rX ${pkgdir}
 
-    cp -r bin lib LICENSE package.json README.md ${pkgdir}${mod_dir}
-
-    sed -i -e '1s,^#!.*node,#!/usr/bin/node,' ${pkgdir}${mod_dir}/bin/*
-
-    ln -s ${mod_dir}/bin/${pkgname}.js ${pkgdir}/usr/bin/nopt
+    # npm installs package.json owned by build user
+    # https://bugs.archlinux.org/task/63396
+    chown -R root:root ${pkgdir}
 }
